@@ -12,32 +12,31 @@ import (
 	"os"
 )
 
+// go run . <(./random.sh 1000)
 func main() {
 	counts := make(map[string]int)
-	if len(os.Args[1:]) == 0 {
-		countLines(os.Stdin, counts)
-	} else {
-		for _, arg := range os.Args[1:] {
-			file, err := os.Open(arg)
+	if len(os.Args) > 1 {
+		for _, name := range os.Args[1:] {
+			f, err := os.Open(name)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "dup2: %v\n", err)
+				fmt.Fprintf(os.Stderr, "dup2: failed to open file %q: %v\n", name, err)
 				continue
 			}
-			countLines(file, counts)
-			file.Close()
+			countLines(f, counts)
+			f.Close()
 		}
+	} else {
+		countLines(os.Stdin, counts)
 	}
-	for line, n := range counts {
-		if n > 1 {
-			fmt.Printf("%d\t%s\n", n, line)
-		}
+
+	for k, v := range counts {
+		fmt.Printf("%d\t%s\n", v, k)
 	}
 }
 
-func countLines(file *os.File, counts map[string]int) {
-	input := bufio.NewScanner(file)
-	for input.Scan() {
-		counts[input.Text()]++
+func countLines(f *os.File, counts map[string]int) {
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		counts[scanner.Text()]++
 	}
-	// NOTE: ignoring potential errors from input.Err()
 }
